@@ -1,0 +1,13 @@
+{
+  "name": "vulcano",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "./start.sh",
+    "serve": "python3 tools/serve.py 8137",
+    "test": "node --test test/",
+    "check": "node tools/check.mjs",
+    "solve": "node tools/solve.mjs"
+  }
+}

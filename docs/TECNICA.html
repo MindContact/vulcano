@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vulcano — documentazione tecnica</title>
+<style>
+  :root{
+    --ink:#1a2332; --muted:#5b6472; --line:#e2e6ec; --brand:#b8380f;
+    --brand-soft:#fdeee6; --accent:#0a7d55; --warn:#8a5a00; --warn-soft:#fdf4e3;
+    --bg:#ffffff; --zebra:#f7f9fc;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); line-height:1.6; margin:0; background:#eef1f5; font-size:15px;}
+  .page{max-width:880px; margin:32px auto; background:var(--bg); padding:56px 64px; box-shadow:0 2px 24px rgba(20,30,50,.10); border-radius:8px;}
+  header.cover{border-bottom:4px solid var(--brand); padding-bottom:24px; margin-bottom:32px;}
+  header.cover .eyebrow{color:var(--brand); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:12px;}
+  h1{font-size:28px; line-height:1.25; margin:8px 0 16px; color:var(--ink);}
+  h2{font-size:20px; margin:38px 0 12px; color:var(--brand); border-bottom:1px solid var(--line); padding-bottom:6px;}
+  h3{font-size:16px; margin:24px 0 8px; color:var(--ink);}
+  p{margin:8px 0;}
+  .meta{display:grid; grid-template-columns:auto 1fr; gap:4px 16px; font-size:14px; color:var(--muted); margin-top:16px;}
+  .meta dt{font-weight:600; color:var(--ink);} .meta dd{margin:0;}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;}
+  th,td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--line);}
+  th{background:var(--brand-soft); color:var(--brand); font-weight:700;}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  tbody tr:nth-child(even){background:var(--zebra);}
+  tr.total td{font-weight:800; border-top:2px solid var(--brand); background:#fdf3ee;}
+  tr.sub td{font-style:italic; color:var(--muted); background:#f2f6fb;}
+  tr.group td{font-weight:700; background:#eef3f9;}
+  .tag{display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:.03em; text-transform:uppercase;}
+  .tag.done{background:#e4f4ec; color:var(--accent);}
+  .tag.todo{background:var(--warn-soft); color:var(--warn);}
+  .tag.up{background:#fde7e7; color:#a11;}
+  .tag.down{background:#e4f4ec; color:var(--accent);}
+  .callout{background:var(--brand-soft); border-left:4px solid var(--brand); padding:16px 20px; border-radius:0 6px 6px 0; margin:20px 0;}
+  .callout.warn{background:var(--warn-soft); border-left-color:var(--warn);}
+  .highlight{background:linear-gradient(90deg,#0b4f8a,#0a6fb0); color:#fff; padding:20px 24px; border-radius:8px; margin:20px 0; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;}
+  .highlight .label{font-size:14px; opacity:.9; letter-spacing:.04em; text-transform:uppercase;}
+  .highlight .value{font-size:30px; font-weight:800;}
+  .kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:20px 0;}
+  .kpi{border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center; background:var(--zebra);}
+  .kpi .n{font-size:24px; font-weight:800; color:var(--brand); font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:4px;}
+  .muted{color:var(--muted);} small{color:var(--muted);}
+  ul{margin:8px 0; padding-left:22px;} li{margin:4px 0;}
+  code{background:#f0f2f5; padding:1px 5px; border-radius:4px; font-size:13px;}
+  footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted); font-style:italic;}
+  .range-band{display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin:16px 0;}
+  .range-band div{padding:14px;}
+  .range-band .c{background:var(--brand); color:#fff;}
+  .range-band .n{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .range-band .l{font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  @page{size:A4; margin:14mm 12mm;}
+  @media print{body{background:#fff;} .page{box-shadow:none; margin:0; max-width:none; padding:24px 8px; border-radius:0;} h2{page-break-after:avoid;} table{page-break-inside:avoid;}}
+  @media (max-width:640px){.page{padding:28px 20px;} .kpi-grid,.range-band{grid-template-columns:1fr;}}
+</style>
+<style>
+.gallery{text-align:center;margin:12px 0;page-break-inside:avoid}
+.gallery img{margin:4px;border:1px solid #ddd;border-radius:8px;vertical-align:top}
+ol{margin:8px 0;padding-left:22px} ol li{margin:4px 0}
+h3,h4{page-break-after:avoid}
+pre{background:#f0f2f5;border-radius:6px;padding:10px 14px;margin:12px 0;overflow-x:auto;page-break-inside:avoid;line-height:1.25}
+pre code{background:none;padding:0;font-size:inherit;white-space:pre}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <div class="eyebrow">Vulcano</div>
+  <h1>Vulcano — documentazione tecnica</h1>
+</header>
+<p>Come si avvia, si prova, si modifica e si pubblica il gioco. Per il funzionamento interno vedi <a href="ARCHITETTURA.html">ARCHITETTURA.md</a>.</p>
+<h2>Requisiti</h2>
+<ul>
+<li>Un browser con <strong>ES modules</strong>, <strong>Canvas 2D</strong> e <strong>AudioWorklet</strong> (Chrome 66+, Firefox 76+, Safari 14.1+).</li>
+<li>Per sviluppo: <strong>Python 3</strong> (server statico) e <strong>Node.js 18+</strong> (controlli automatici, usa <code>structuredClone</code>). Nessuna dipendenza npm, nessuna build.</li>
+</ul>
+<h2>Avvio in sviluppo</h2>
+<pre style="font-size:12px"><code>./start.sh                     # server + browser su http://localhost:8137/
+./start.sh 9000 --no-open      # altra porta, senza aprire il browser
+npm run serve                  # solo il server = python3 tools/serve.py 8137</code></pre>
+<p><code>start.sh</code> controlla prima la porta: se risponde già Vulcano apre solo il browser, se risponde un'altra applicazione esce con errore invece di aprire la pagina sbagliata. Il server di <code>tools/serve.py</code> manda <code>Cache-Control: no-store</code>: senza, Chrome tiene in cache i moduli ES e un ricaricamento non vede le modifiche.</p>
+<p>Serve un server HTTP: da <code>file://</code> i moduli e l'AudioWorklet non si caricano.</p>
+<p>Il motore è nel submodule <code>lib/motorino</code> (repository locale <code>../motorino</code>): loop, input, font, sprite, mappe, fisica del giocatore, camera, particelle, stati, salvataggio, collegamento al SID. Si cambia lì, con i suoi test (<code>npm test</code>), poi qui <code>git -C lib/motorino fetch</code>, <code>checkout</code> della nuova versione, <code>git add lib/motorino</code> e un commit; dopo, <code>node tools/solve.mjs</code>.</p>
+<p>Il SID è nel submodule <code>lib/sidicio</code> (<a href="https://github.com/MindContact/sidicio">MindContact/sidicio</a>): clonare con <code>git clone --recurse-submodules</code>, o dare <code>git submodule update --init</code> in un clone già fatto. Senza, il gioco parte muto e <code>tools/check.mjs</code> fallisce sull'import.</p>
+<p>Per cambiare l'emulazione o i player si lavora in sidicio (con i suoi test, <code>npm test</code> lì dentro), si fa commit e push nel suo repository, poi in Vulcano si registra la nuova versione con <code>git add lib/sidicio</code> e un commit. Prima e dopo si confrontano i WAV di <code>node tools/check.mjs --wav DIR</code>: un refactoring non deve cambiare un solo byte.</p>
+<h3>Parametri URL</h3>
+<table>
+<thead><tr><th class="">Parametro</th><th class="">Effetto</th></tr></thead>
+<tbody>
+<tr><td class=""><code>?level=N</code></td><td class="">salta il titolo e parte dal livello N (1–5)</td></tr>
+<tr><td class=""><code>?god</code></td><td class="">immortale a lava, spuntoni, nemici e fuoco (non alle cadute); compare GOD nell'HUD</td></tr>
+</tbody>
+</table>
+<p>Si combinano: <code>?level=3&amp;god</code>.</p>
+<h3>Dalla console del browser</h3>
+<p>Il gioco è esposto come <code>window.game</code>. Utile per i test:</p>
+<pre style="font-size:12px"><code>game.state = 'play'                       // salta la scheda del livello
+game.world.player.x = 60 * 16             // teletrasporto (pixel)
+game.world.snapCamera()
+game.audio.sfx('death')                   // suona un effetto
+game.audio.replay('fuga')                 // suona un brano
+localStorage.removeItem('vulcano.v1')     // azzera progressi e impostazioni</code></pre>
+<h2>Controlli automatici</h2>
+<pre style="font-size:10.9px"><code>npm test                             # mondo deterministico e replay dei livelli
+node tools/check.mjs                 # oppure: npm run check
+node tools/check.mjs --wav DIR       # scrive anche ogni brano e gli effetti in WAV
+node tools/solve.mjs                 # tutti i livelli, a ogni difficoltà (oppure: npm run solve)
+node tools/solve.mjs 3               # un livello
+node tools/solve.mjs 3 hard          # un livello a una difficoltà (easy, normal, hard)</code></pre>
+<p><strong><code>check.mjs</code></strong> verifica che:</p>
+<ul>
+<li>ogni sezione di ogni brano abbia le tre voci della stessa lunghezza e a battute intere (16 righe);</li>
+<li>ogni brano e ogni effetto si renda senza <code>NaN</code> e non sia muto;</li>
+<li>i jingle (brani senza loop) finiscano;</li>
+<li>ogni livello si analizzi (caratteri noti, un inizio, almeno un'uscita).</li>
+</ul>
+<p><strong><code>solve.mjs</code></strong> dimostra che ogni livello si può finire: una ricerca best-first su sequenze di input, eseguite sulla vera classe <code>World</code> (fisica, nemici, geyser, lava che sale, piattaforme), a ognuna delle tre difficoltà. Se un livello non si risolve stampa il punto più vicino all'uscita raggiunto; con <code>MAP=1</code> anche la mappa attorno. Va rilanciato <strong>dopo ogni modifica a un livello, alla fisica del salto, alla tabella delle difficoltà o a motorino</strong>. Ogni strada trovata finisce in <code>test/replays/</code>, e <strong><code>npm test</code></strong> la rigioca dall'inizio: se un replay non arriva più all'uscita, il risolutore va rilanciato. Lo stesso <code>npm test</code> controlla che il mondo sia deterministico (due corse uguali, stesso stato) e che un salvataggio della ricerca riporti indietro esattamente.</p>
+<p>Il WAV di <code>--wav</code> è il modo più rapido per ascoltare un brano mentre lo si scrive, senza aprire il gioco.</p>
+<h2>Struttura dei file</h2>
+<pre style="font-size:12px"><code>index.html              canvas, tasti touch, carica src/main.js
+style.css               scala pixel-perfect, tasti touch
+src/main.js             shell: stati, punteggio, vite, menu, opzioni, HUD
+src/i18n.js             testi a schermo in italiano e inglese
+src/icon.js             l'icona dell'app, disegnata come testo
+src/game/levels.js      livelli come testo + parser
+src/game/world.js       simulazione di un livello
+src/game/difficulty.js  le tre difficoltà: vite, lava, nemici, golem
+src/game/render.js      disegno del mondo
+src/game/sprites.js     sprite pixel-art come testo
+src/audio/songs.js      brani e strumenti in notazione tracker
+src/audio/sfx.js        effetti sonori come programmi a frame
+lib/motorino/           submodule: il motore 2D (loop, input, font, fisica, audio…)
+lib/sidicio/            submodule: emulazione SID, player, compilatore, worklet
+start.sh                avvio: server + browser
+manifest.webmanifest    la PWA: nome, colori, icone
+sw.js                   service worker (quello di motorino)
+icons/                  icone dell'app, generate da src/icon.js
+tools/serve.py          server di sviluppo senza cache
+tools/check.mjs         controlli di audio e livelli
+tools/sim.mjs           il mondo senza browser, per solver e test
+tools/solve.mjs         prova di completabilità dei livelli
+test/                   test (node:test) e replay dei livelli
+docs/                   questa documentazione</code></pre>
+<h2>Modificare i contenuti</h2>
+<h3>Un livello</h3>
+<p>I livelli stanno in <code>src/game/levels.js</code>, disegnati come testo, un carattere per casella da 16×16 px. La legenda è in testa al file:</p>
+<table>
+<thead><tr><th class="">Car.</th><th class="">Significato</th><th class="">Car.</th><th class="">Significato</th></tr></thead>
+<tbody>
+<tr><td class=""><code>#</code></td><td class="">roccia</td><td class=""><code>=</code></td><td class="">crosta (solida solo dall'alto)</td></tr>
+<tr><td class=""><code>C</code></td><td class="">roccia che crolla</td><td class=""><code>~</code></td><td class="">lava</td></tr>
+<tr><td class=""><code>^</code></td><td class="">spuntoni</td><td class=""><code>G</code></td><td class="">bocchetta di geyser</td></tr>
+<tr><td class=""><code>|</code></td><td class="">fermo invisibile per piattaforme</td><td class=""><code>o</code></td><td class="">cristallo</td></tr>
+<tr><td class=""><code>K</code></td><td class="">checkpoint</td><td class=""><code>E</code></td><td class="">uscita</td></tr>
+<tr><td class=""><code>P</code></td><td class="">partenza</td><td class=""><code>s</code></td><td class="">lumaca</td></tr>
+<tr><td class=""><code>v</code></td><td class="">pipistrello</td><td class=""><code>f</code></td><td class="">bolla di fuoco (in lava)</td></tr>
+<tr><td class=""><code>M</code></td><td class="">piattaforma orizzontale</td><td class=""><code>N</code></td><td class="">ascensore verticale</td></tr>
+<tr><td class=""><code>B</code></td><td class="">golem di magma (boss)</td><td class=""></td><td class=""></td></tr>
+</tbody>
+</table>
+<p>Il golem vuole un'arena larga 20 colonne che parte 9 colonne a sinistra di <code>B</code>; con il golem, le uscite del livello restano chiuse finché non cade. Conviene che l'arena sia l'ultima schermata della mappa (la telecamera, ai bordi, la mostra intera) e che ci sia un checkpoint appena prima.</p>
+<p>I livelli orizzontali si compongono con <code>seg(altezza, righe)</code>, segmenti larghi 16 colonne allineati in basso, e <code>join(...)</code>; <code>roof(righe, n)</code> chiude di roccia le prime n righe (grotte). La voce in <code>LEVELS</code> dà nome, sfondo (<code>sky</code> o <code>cave</code>), brano, tempo di riferimento (<code>par</code>, secondi) e l'eventuale lava che sale (<code>rise: { delay, speed }</code>, in update e pixel per update) o il fronte di lava che insegue da sinistra (<code>chase: { delay, speed }</code>, stesse unità).</p>
+<p>Misure da tenere a mente: il salto pieno sale di <strong>circa 53 px (3⅓ caselle)</strong> e copre circa <strong>4 caselle</strong> in orizzontale di corsa; tenere i buchi a 3 caselle al massimo. Poi: <code>node tools/check.mjs &amp;&amp; node tools/solve.mjs &amp;&amp; npm test</code>.</p>
+<h3>Un brano</h3>
+<p>In <code>src/audio/songs.js</code> (formato di sidicio, vedi <code>lib/sidicio/README.it.md</code>), ogni brano ha <code>speed</code> (frame a 50 Hz per riga), <code>filter</code> opzionale (cutoff 0–2047, risonanza 0–15, modo 1=passa-basso, LFO sul cutoff), <code>sections</code> (ognuna con tre stringhe, una per voce) e <code>loop</code> (indice della sezione da cui ripetere, <code>-1</code> per i jingle).</p>
+<table>
+<thead><tr><th class="">Token</th><th class="">Significato</th></tr></thead>
+<tbody>
+<tr><td class=""><code>C4</code> <code>D#5</code></td><td class="">nota (C4 = MIDI 60) con lo strumento corrente</td></tr>
+<tr><td class=""><code>C4@lead</code></td><td class="">una nota con un altro strumento</td></tr>
+<tr><td class=""><code>C4~</code></td><td class="">glide verso la nota senza riattaccarla</td></tr>
+<tr><td class=""><code>.</code></td><td class="">tieni</td></tr>
+<tr><td class=""><code>-</code></td><td class="">rilascia (gate off)</td></tr>
+<tr><td class=""><code>K</code> <code>S</code> <code>H</code></td><td class="">cassa, rullante, charleston</td></tr>
+<tr><td class=""><code>@nome</code></td><td class="">cambia strumento (non occupa una riga)</td></tr>
+</tbody>
+</table>
+<p>Gli helper <code>bassEighths</code>, <code>bassGallop</code>, <code>bassSlow</code>, <code>drumChords</code>, <code>padChords</code>, <code>rest</code> generano una battuta per accordo. Gli strumenti stanno in <code>INSTRUMENTS</code>; i campi sono documentati in <a href="ARCHITETTURA.html#strumenti">ARCHITETTURA.md</a>.</p>
+<h3>Un effetto sonoro</h3>
+<p>In <code>src/audio/sfx.js</code>: <code>prio</code> (un effetto ruba la voce solo a uno di priorità uguale o minore), <code>adsr</code>, <code>frames</code> (una voce <code>[onda, hz, larghezzaImpulso]</code> per frame a 50 Hz, <code>null</code> = gate off) e <code>cutoff</code> opzionale (un valore per frame, passa il suono nel filtro). Gli helper <code>sweep</code> e <code>notes</code> coprono quasi tutto. Poi chiamalo con <code>this.hooks.sfx('nome')</code> dal mondo o <code>this.audio.sfx('nome')</code> dalla shell.</p>
+<h3>Uno sprite</h3>
+<p>In <code>src/game/sprites.js</code>, sprite come righe di testo: ogni carattere è un colore della <code>PALETTE</code>, <code>.</code> è trasparente. Tutte le righe della stessa larghezza (altrimenti errore al caricamento). Lo sprite guarda a destra; il renderer lo specchia.</p>
+<p>Un personaggio nuovo: busto e gambe in <code>CHARACTERS</code>, nome nelle due lingue in <code>src/i18n.js</code> (<code>characters</code>). Tenere il riquadro 12×16: la hitbox è la stessa per tutti.</p>
+<h3>Un testo a schermo</h3>
+<p>In <code>src/i18n.js</code>, la stessa chiave in entrambe le lingue, poi <code>this.t.chiave</code> nella shell. Solo maiuscole: il font non ha minuscole.</p>
+<h3>La documentazione in HTML e PDF</h3>
+<p>Accanto a ogni <code>docs/*.md</code> ci sono il suo <code>.html</code> e il suo <code>.pdf</code>, generati:</p>
+<pre style="font-size:12px"><code>./tools/docs.sh        # rigenera HTML e PDF di GUIDA, TECNICA, ARCHITETTURA</code></pre>
+<p>Usa il convertitore <code>md2pdf.sh</code> di md-to-pdf (sul <code>PATH</code>, oppure indicato con <code>MD2PDF=...</code>) e Chrome headless; lo stile è <code>tools/doc-template.html</code>. Rilanciarlo dopo ogni modifica a un documento, nello stesso commit. Il convertitore è volutamente piccolo: niente elenchi annidati né HTML nel Markdown.</p>
+<h2>Salvataggio</h2>
+<p>Una sola chiave <code>localStorage</code>, <code>vulcano.v1</code>:</p>
+<pre style="font-size:11.6px"><code>{ "settings": { "music": 7, "sfx": 8, "model": 6581, "lang": "it", "character": "explorer",
+                "difficulty": "normal" },
+  "progress": { "unlocked": 2, "best": 12400 } }</code></pre>
+<p>Il muto non si salva. Se il formato cambia in modo incompatibile, cambiare il nome della chiave.</p>
+<h2>Pubblicazione</h2>
+<p>Il gioco è un sito statico: basta copiare <code>index.html</code>, <code>style.css</code>, <code>manifest.webmanifest</code>, <code>sw.js</code>, <code>icons/</code>, <code>src/</code>, <code>lib/motorino/src/</code>, <code>lib/motorino/pwa/</code> e <code>lib/sidicio/src/</code> su un qualunque hosting HTTPS (GitHub Pages, Netlify, un bucket). <code>tools/</code>, <code>docs/</code> e <code>package.json</code> non servono in produzione. L'AudioWorklet richiede un contesto sicuro: HTTPS o <code>localhost</code>.</p>
+<h3>PWA</h3>
+<p>Vulcano si installa come app e gioca offline. <code>manifest.webmanifest</code> dà nome, colori, orientamento orizzontale e icone; <code>sw.js</code> importa il service worker di motorino (<code>lib/motorino/pwa/sw.js</code>), che chiede sempre i file alla rete e ne tiene una copia: offline serve l'ultima copia buona. Non c'è un elenco di file da aggiornare, perché il gioco carica tutti i suoi moduli all'avvio. In sviluppo non dà fastidio: con la rete vince sempre la rete.</p>
+<p>Le icone in <code>icons/</code> (32, 180, 192 e 512 px) si rifanno dal disegno in <code>src/icon.js</code>:</p>
+<pre style="font-size:12px"><code>node lib/motorino/tools/icon.mjs src/icon.js icons</code></pre>
+<h2>Prestazioni</h2>
+<p>Il costo vero è l'audio: due SID con oversampling 4x significano circa 350 000 passi oscillatore al secondo per chip, nel thread audio. Misurato in Node sulla macchina di sviluppo (tre voci per chip, filtro acceso): circa 120 ms di calcolo per secondo d'audio, cioè <strong>~12% di un core</strong>. È il primo posto da guardare se il gioco scatta su hardware debole; <code>OVERSAMPLE</code> in <code>lib/sidicio/src/chip.js</code> a 2 dimezza il costo a prezzo di un po' di aliasing negli acuti. Il disegno è a 320×180, scalato dal CSS con <code>image-rendering: pixelated</code>; la parte statica del livello è pre-renderizzata.</p>
+
+</div>
+</body>
+</html>

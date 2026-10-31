@@ -1,0 +1,6 @@
+[submodule "lib/sidicio"]
+	path = lib/sidicio
+	url = https://github.com/MindContact/sidicio.git
+[submodule "lib/motorino"]
+	path = lib/motorino
+	url = https://github.com/MindContact/motorino.git

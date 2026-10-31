@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vulcano — architettura e funzionamento interno</title>
+<style>
+  :root{
+    --ink:#1a2332; --muted:#5b6472; --line:#e2e6ec; --brand:#b8380f;
+    --brand-soft:#fdeee6; --accent:#0a7d55; --warn:#8a5a00; --warn-soft:#fdf4e3;
+    --bg:#ffffff; --zebra:#f7f9fc;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); line-height:1.6; margin:0; background:#eef1f5; font-size:15px;}
+  .page{max-width:880px; margin:32px auto; background:var(--bg); padding:56px 64px; box-shadow:0 2px 24px rgba(20,30,50,.10); border-radius:8px;}
+  header.cover{border-bottom:4px solid var(--brand); padding-bottom:24px; margin-bottom:32px;}
+  header.cover .eyebrow{color:var(--brand); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:12px;}
+  h1{font-size:28px; line-height:1.25; margin:8px 0 16px; color:var(--ink);}
+  h2{font-size:20px; margin:38px 0 12px; color:var(--brand); border-bottom:1px solid var(--line); padding-bottom:6px;}
+  h3{font-size:16px; margin:24px 0 8px; color:var(--ink);}
+  p{margin:8px 0;}
+  .meta{display:grid; grid-template-columns:auto 1fr; gap:4px 16px; font-size:14px; color:var(--muted); margin-top:16px;}
+  .meta dt{font-weight:600; color:var(--ink);} .meta dd{margin:0;}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;}
+  th,td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--line);}
+  th{background:var(--brand-soft); color:var(--brand); font-weight:700;}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  tbody tr:nth-child(even){background:var(--zebra);}
+  tr.total td{font-weight:800; border-top:2px solid var(--brand); background:#fdf3ee;}
+  tr.sub td{font-style:italic; color:var(--muted); background:#f2f6fb;}
+  tr.group td{font-weight:700; background:#eef3f9;}
+  .tag{display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:.03em; text-transform:uppercase;}
+  .tag.done{background:#e4f4ec; color:var(--accent);}
+  .tag.todo{background:var(--warn-soft); color:var(--warn);}
+  .tag.up{background:#fde7e7; color:#a11;}
+  .tag.down{background:#e4f4ec; color:var(--accent);}
+  .callout{background:var(--brand-soft); border-left:4px solid var(--brand); padding:16px 20px; border-radius:0 6px 6px 0; margin:20px 0;}
+  .callout.warn{background:var(--warn-soft); border-left-color:var(--warn);}
+  .highlight{background:linear-gradient(90deg,#0b4f8a,#0a6fb0); color:#fff; padding:20px 24px; border-radius:8px; margin:20px 0; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;}
+  .highlight .label{font-size:14px; opacity:.9; letter-spacing:.04em; text-transform:uppercase;}
+  .highlight .value{font-size:30px; font-weight:800;}
+  .kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:20px 0;}
+  .kpi{border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center; background:var(--zebra);}
+  .kpi .n{font-size:24px; font-weight:800; color:var(--brand); font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:4px;}
+  .muted{color:var(--muted);} small{color:var(--muted);}
+  ul{margin:8px 0; padding-left:22px;} li{margin:4px 0;}
+  code{background:#f0f2f5; padding:1px 5px; border-radius:4px; font-size:13px;}
+  footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted); font-style:italic;}
+  .range-band{display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin:16px 0;}
+  .range-band div{padding:14px;}
+  .range-band .c{background:var(--brand); color:#fff;}
+  .range-band .n{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .range-band .l{font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  @page{size:A4; margin:14mm 12mm;}
+  @media print{body{background:#fff;} .page{box-shadow:none; margin:0; max-width:none; padding:24px 8px; border-radius:0;} h2{page-break-after:avoid;} table{page-break-inside:avoid;}}
+  @media (max-width:640px){.page{padding:28px 20px;} .kpi-grid,.range-band{grid-template-columns:1fr;}}
+</style>
+<style>
+.gallery{text-align:center;margin:12px 0;page-break-inside:avoid}
+.gallery img{margin:4px;border:1px solid #ddd;border-radius:8px;vertical-align:top}
+ol{margin:8px 0;padding-left:22px} ol li{margin:4px 0}
+h3,h4{page-break-after:avoid}
+pre{background:#f0f2f5;border-radius:6px;padding:10px 14px;margin:12px 0;overflow-x:auto;page-break-inside:avoid;line-height:1.25}
+pre code{background:none;padding:0;font-size:inherit;white-space:pre}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <div class="eyebrow">Vulcano</div>
+  <h1>Vulcano — architettura e funzionamento interno</h1>
+</header>
+<p>Questo documento spiega come è fatto il gioco dentro: i moduli, come si parlano, e come funziona ciascuno. Per avvio, test e modifica dei contenuti vedi <a href="TECNICA.html">TECNICA.md</a>.</p>
+<h2>1. Il quadro d'insieme</h2>
+<p>Il gioco è JavaScript puro in moduli ES, senza librerie né build. Due thread:</p>
+<pre style="font-size:10.3px"><code>                     MAIN THREAD                                    AUDIO THREAD
+ ┌──────────────────────────────────────────────────────┐      ┌──────────────────────────┐
+ │                                                      │      │  AudioWorkletProcessor   │
+ │  Input ──azioni──&gt; Game (main.js) ──hooks──┐         │      │  (lib/sidicio, worklet)  │
+ │  tastiera          stati, punti, vite,     │         │      │                          │
+ │  gamepad           menu, HUD, loop 60 Hz   │         │      │  MusicPlayer ──&gt; SidChip │──┐
+ │  touch               │    ▲                │         │      │     (musica)     #1      │  │ mix
+ │                      │    │ hooks:         │         │ port │                          │  ├──&gt; casse
+ │                      ▼    │ sfx, onGem,    │         │ ───&gt; │  SfxPlayer  ──&gt; SidChip  │──┘
+ │                    World (world.js)        │         │ msg  │     (effetti)    #2      │
+ │                    fisica, nemici,         ▼         │      │                          │
+ │                    pericoli, camera     Audio ───────┼──────┤  tick a 50 Hz,           │
+ │                      │                 (motorino)    │      │  render a 44.1/48 kHz    │
+ │                      ▼                               │      └──────────────────────────┘
+ │                    Renderer (render.js) ──&gt; canvas 320x180 ──&gt; CSS scala ×N
+ └──────────────────────────────────────────────────────┘</code></pre>
+<ul>
+<li><strong>Game</strong> (<code>main.js</code>) è la shell: possiede lo stato del gioco, crea un <code>World</code> per livello, lo aggiorna e lo fa disegnare.</li>
+<li><strong>World</strong> (<code>world.js</code>) è la simulazione di un livello. Non sa nulla di schermo, suoni, punti o vite: espone il suo stato e chiama dei <em>hook</em>.</li>
+<li><strong>Renderer</strong> (<code>render.js</code>) legge il <code>World</code> e disegna. Non lo modifica mai.</li>
+<li><strong>Audio</strong> (<code>Audio</code> di motorino) traduce le chiamate del gioco in messaggi verso il <strong>worklet</strong>, che emula due chip SID e li suona.</li>
+</ul>
+<p>Le parti generiche vengono da <strong>motorino</strong> (<code>lib/motorino</code>, submodule): loop, schermo, <code>Input</code>, font, <code>bake</code>/<code>drawSprite</code>, <code>parseMap</code>/<code>TileMap</code>, <code>Body</code> (fisica platform), <code>Camera</code>, <code>Particles</code>, <code>StateMachine</code>, <code>createStore</code>, <code>createI18n</code>, <code>Audio</code>. Vulcano tiene livelli, regole, nemici, disegno, testi, brani ed effetti; i dettagli dei moduli di motorino sono nel commento in testa a ciascuno.</p>
+<p>Le dipendenze vanno in un solo verso (motorino escluso, che tutti usano): <code>main</code> → <code>world</code>, <code>difficulty</code>, <code>render</code>, <code>songs</code>, <code>sfx</code>; <code>render</code> → <code>world</code> (solo lettura), <code>levels</code>, <code>sprites</code>; <code>world</code> → <code>levels</code>, <code>difficulty</code>. Il mondo non importa niente di grafica o audio, ed è per questo che <code>tools/solve.mjs</code> può eseguirlo in Node.</p>
+<h2>2. Il ciclo principale</h2>
+<p><code>startLoop</code> di motorino, avviato dal costruttore di <code>Game</code>, è chiamato da <code>requestAnimationFrame</code>. Usa un <strong>accumulatore a passo fisso</strong>:</p>
+<pre style="font-size:12px"><code>acc += tempo reale trascorso (max 0,25 s)
+finché acc ≥ 1/60:
+    input.update()     // fotografa i tasti
+    game.update()      // un passo di logica
+    acc -= 1/60        // (al massimo 5 passi per frame)
+draw()                 // un disegno</code></pre>
+<p>Perché: tutta la fisica è tarata <strong>per update</strong> (es. gravità 0,4 px/update²), quindi deve girare a 60 Hz qualunque sia il refresh dello schermo. Su un monitor a 144 Hz alcuni frame non aggiornano e ridisegnano lo stesso stato; a 30 Hz si fanno due update per frame. Il limite di 0,25 s e di 5 passi evita che dopo una pausa lunga (scheda in background, breakpoint) il gioco "recuperi" correndo avanti alla cieca.</p>
+<p>Quando la scheda si nasconde o la finestra perde il focus (<code>watchFocus</code> di motorino: <code>visibilitychange</code> e <code>blur</code>) il gioco va in pausa; l'AudioContext viene sospeso solo con la scheda nascosta.</p>
+<h2>3. La macchina a stati della shell</h2>
+<p>Una <code>StateMachine</code> di motorino (<code>game.states</code>, stati in <code>STATES</code> in fondo a <code>main.js</code>) decide cosa fa ogni update e cosa si disegna; <code>states.time</code> conta gli update dall'ingresso nello stato:</p>
+<pre style="font-size:9.3px"><code>options &lt;──&gt; title ──GIOCA──&gt; intro ──(2,3 s o tasto)──&gt; play &lt;──P/Esc──&gt; paused ──"menu"──&gt; title
+credits &lt;──────┘                ▲                          │
+                                │                          ├── uscita ──&gt; clear ──tasto──┬──&gt; intro (livello dopo)
+                                │                          │                             └──&gt; win ──tasto──&gt; title
+                                │                          │
+                                └──── Invio ── gameover &lt;──┴── ultima vita persa</code></pre>
+<table>
+<thead><tr><th class="">Stato</th><th class="">Update</th><th class="">Disegno</th></tr></thead>
+<tbody>
+<tr><td class=""><code>title</code></td><td class="">menu (↑↓ voce, ←→ livello)</td><td class="">sfondo cielo animato, logo, menu</td></tr>
+<tr><td class=""><code>options</code></td><td class="">lingua, difficoltà, personaggio, chip, volumi; Esc torna</td><td class="">stesso sfondo, voci e personaggio che corre</td></tr>
+<tr><td class=""><code>credits</code></td><td class="">Invio o Esc torna</td><td class="">stesso sfondo, righe <code>creditRows</code> di <code>i18n.js</code></td></tr>
+<tr><td class=""><code>intro</code></td><td class="">attende</td><td class="">mondo fermo + scheda del livello</td></tr>
+<tr><td class=""><code>play</code></td><td class=""><code>world.update(input)</code>; brano <code>golem</code> finché <code>world.bossFight</code>, altrimenti quello del livello</td><td class="">mondo + HUD</td></tr>
+<tr><td class=""><code>paused</code></td><td class="">menu pausa</td><td class="">mondo fermo + velo</td></tr>
+<tr><td class=""><code>clear</code></td><td class="">conta il bonus nel punteggio</td><td class="">tabellone</td></tr>
+<tr><td class=""><code>gameover</code></td><td class="">attende Invio / Esc</td><td class="">velo + GAME OVER</td></tr>
+<tr><td class=""><code>win</code></td><td class="">attende</td><td class="">schermata finale</td></tr>
+</tbody>
+</table>
+<p>Il mondo segnala gli eventi con gli hook passati al costruttore, e la shell decide cosa significano:</p>
+<table>
+<thead><tr><th class="">Hook</th><th class="">Chi lo chiama</th><th class="">Cosa fa la shell</th></tr></thead>
+<tbody>
+<tr><td class=""><code>sfx(nome)</code></td><td class="">ovunque nel mondo</td><td class=""><code>audio.sfx(nome)</code></td></tr>
+<tr><td class=""><code>onGem()</code></td><td class="">cristallo preso</td><td class="">+100 punti; ogni 30 una vita (con effetto e banner)</td></tr>
+<tr><td class=""><code>onStomp()</code></td><td class="">nemico schiacciato, colpo al golem</td><td class="">+200 punti</td></tr>
+<tr><td class=""><code>onBoss()</code></td><td class="">golem sconfitto</td><td class="">+5000 punti, banner</td></tr>
+<tr><td class=""><code>onDeath()</code></td><td class="">fine dell'animazione di morte</td><td class="">−1 vita; respawn o game over</td></tr>
+<tr><td class=""><code>onExit()</code></td><td class="">giocatore nell'uscita</td><td class="">calcola bonus, sblocca il livello, salva, → <code>clear</code></td></tr>
+</tbody>
+</table>
+<h2>4. Livelli: dal testo alla mappa</h2>
+<p>Un livello è un array di stringhe (<code>levels.js</code>). <code>parseLevel(def)</code> lo trasforma in:</p>
+<pre style="font-size:12px"><code>{ w, h,                  // dimensioni in caselle
+  tiles: Uint8Array,     // w*h codici T.EMPTY, T.ROCK, T.CRUST, ...
+  spawns: [{kind,x,y}],  // entità da creare (cristalli, nemici, ...)
+  start: {x,y},          // casella di partenza
+  gemCount }</code></pre>
+<p>Alcuni caratteri sono sia casella sia entità: <code>f</code> (bolla di fuoco) è lava <em>e</em> genera una bolla che vive in quella lava. Le bocchette dei geyser (<code>G</code>) sono caselle solide; il <code>World</code> le trova scandendo la mappa e crea un'entità geyser per ciascuna.</p>
+<p>Il parser rifiuta caratteri sconosciuti, due partenze, nessuna partenza o nessuna uscita. Gli helper <code>seg</code>/<code>join</code>/<code>roof</code> controllano che ogni riga di un segmento sia larga uguale: l'errore tipico di un livello disegnato a mano è una riga con uno spazio in più, e così salta fuori subito con il numero di riga.</p>
+<h2>5. La simulazione (<code>World</code>)</h2>
+<h3>5.1 Unità e determinismo</h3>
+<p>Pixel per le posizioni (16 per casella), pixel/update per le velocità, update per il tempo. Il mondo non legge mai un orologio: stessa sequenza di input, stessa partita. Il caso che conta per le regole (l'attesa di una bolla di fuoco fra un salto e l'altro) viene da <code>rand()</code>, un generatore del mondo (mulberry32) con il seme del livello, salvato nello stato: così una strada trovata dal solver si rigioca identica. <code>Math.random</code> resta solo nelle particelle, che non cambiano niente.</p>
+<h3>5.2 Ordine di un update</h3>
+<pre style="font-size:12px"><code>time++ → crolli → piattaforme → giocatore → entità → lava → particelle → camera</code></pre>
+<p>L'ordine conta: le piattaforme si muovono <strong>prima</strong> del giocatore, così chi ci sta sopra viene trasportato e poi collide normalmente; i pericoli si controllano <strong>dopo</strong> il movimento che può averli causati.</p>
+<h3>5.3 Il giocatore</h3>
+<p>Il giocatore è un <code>Body</code> di motorino con la sua taratura di default (<code>DEFAULT_TUNING</code>, che è quella di Vulcano, con il <code>tuning</code> della difficoltà sopra: vedi 5.7), sempre con la gravità in giù, e qualche campo in più (<code>platform</code>, <code>anim</code>, <code>dead</code>, <code>invuln</code>). Hitbox 10×14, più stretta dello sprite (12 px) perché un quasi-contatto sembri un mancato contatto.</p>
+<p><strong>Orizzontale</strong>: accelerazione verso <code>runSpeed</code> (1,9 px/update), attrito a terra, leggero smorzamento in aria.</p>
+<p><strong>Salto</strong>, i trucchi che lo rendono piacevole:</p>
+<ul>
+<li><strong>coyote time</strong> (<code>coyote</code> = 6 update): si può saltare per un decimo di secondo dopo aver lasciato il bordo;</li>
+<li><strong>jump buffer</strong> (<code>jumpBuffer</code> = 7): un salto premuto poco prima di atterrare parte all'atterraggio;</li>
+<li><strong>salto variabile</strong>: rilasciando il tasto la velocità verso l'alto viene tagliata a <code>jumpCut</code>, e finché lo si tiene la gravità in salita è più bassa (<code>gravityUp</code> 0,32 contro <code>gravityDown</code> 0,4). Ne viene un salto pieno di circa 53 px (3⅓ caselle) e un saltello di circa 10 (misurati sul codice).</li>
+</ul>
+<p><strong>Collisioni</strong> (<code>Body.step</code> contro la <code>TileMap</code> del mondo): un asse per volta, x poi y. Si sposta il box e lo si ferma contro la prima casella solida che incontra. Le velocità restano sotto i 16 px/update, quindi il box non può attraversare un muro in un passo.</p>
+<p><strong>Crosta</strong> (<code>=</code>): casella <em>one-way</em> della <code>TileMap</code>, solida solo se il fondo del box era sopra la superficie <em>prima</em> del movimento. ↓ + salto sopra una crosta imposta <code>dropThrough</code> per qualche update e si cade attraverso.</p>
+<p><strong>Piattaforme mobili</strong>: quando il giocatore atterra su una piattaforma, <code>player.platform</code> punta a lei. In <code>updatePlatforms</code> la piattaforma sposta il giocatore dello stesso delta. Il <code>Body</code> non vede le piattaforme (non sono caselle): dopo il suo passo, <code>ridePlatforms</code> tiene il giocatore agganciato finché è dentro i bordi e non salta. La regola "era sopra" è allargata dello spostamento della piattaforma, così un ascensore che sale "raccoglie" i piedi in cui entra.</p>
+<p><strong>Pericoli</strong> (<code>checkHazards</code>): lava e spuntoni contano solo quando i piedi ci sono dentro di qualche pixel, per perdonare chi sfiora la superficie. Nemici, bolle e geyser si controllano nei rispettivi update.</p>
+<p><strong>Morte e respawn</strong>: <code>kill</code> avvia un'animazione di 80 update (salto all'indietro, esplosione di scintille, scossa della camera). Alla fine il mondo chiama <code>onDeath</code>; se la shell sceglie il respawn, <code>respawn()</code> rimette il giocatore all'ultimo checkpoint con un secondo di invulnerabilità.</p>
+<h3>5.4 Le entità</h3>
+<p>Oggetti semplici con un campo <code>kind</code>; ognuno ha la sua funzione di update e il suo pezzo di disegno.</p>
+<table>
+<thead><tr><th class="">Kind</th><th class="">Comportamento</th></tr></thead>
+<tbody>
+<tr><td class=""><code>gem</code></td><td class="">fermo; preso al contatto</td></tr>
+<tr><td class=""><code>checkpoint</code></td><td class="">al contatto diventa attivo e sposta <code>respawnPoint</code></td></tr>
+<tr><td class=""><code>exit</code></td><td class="">al contatto chiama <code>onExit</code>; <code>locked</code> (con un golem nel livello) la tiene chiusa</td></tr>
+<tr><td class=""><code>boss</code></td><td class="">il golem: vedi sotto</td></tr>
+<tr><td class=""><code>wave</code></td><td class="">onda d'urto del golem: corre sul pavimento fino al bordo dell'arena</td></tr>
+<tr><td class=""><code>slug</code></td><td class="">cammina, gira contro i muri e <strong>sull'orlo</strong> (non cade mai in lava)</td></tr>
+<tr><td class=""><code>bat</code></td><td class="">ignora la mappa: un otto attorno al punto di nascita</td></tr>
+<tr><td class=""><code>bubble</code></td><td class="">aspetta nella lava, viene lanciata a ~72 px (<code>v = √(2gh)</code>), ricade</td></tr>
+<tr><td class=""><code>geyser</code></td><td class="">ciclo di 200 update: 100 quiete, 40 preavviso (fumo, bocchetta che lampeggia), 60 getto alto 48 px</td></tr>
+<tr><td class=""><code>platform</code></td><td class=""><code>M</code> orizzontale / <code>N</code> verticale, rimbalza su roccia o fermi <code>|</code></td></tr>
+</tbody>
+</table>
+<p><strong>Schiacciare</strong>: un contatto con un nemico è uno schiacciamento se il giocatore scende e il suo fondo, nell'update prima, era sopra la testa del nemico (+4 px di tolleranza). Il rimbalzo è pieno se si tiene il salto.</p>
+<p><strong>Il golem</strong> (<code>updateBoss</code>) è una macchina a stati (durate in update):</p>
+<pre style="font-size:9.1px"><code>sleep ──entri nell'arena──&gt; wake 90 ──&gt; walk 80 ──&gt; crouch 24 ──&gt; leap ──atterra, 2 onde──&gt; stunned 120
+                                         ▲                                                     │
+                                         ├──────────────────── tempo scaduto ──────────────────┤
+                                         └──── hurt 50 &lt;──── schiacciato, hp &gt; 0 ──────────────┤
+                                                                                               │ schiacciato, hp = 0
+                                                                     dead &lt;──── dying 120 &lt;────┘</code></pre>
+<p>Se il giocatore muore il golem torna in <code>sleep</code>, a casa, con gli hp che aveva; da <code>dead</code> apre le uscite e chiama <code>onBoss</code>.</p>
+<p>Nel salto mira al punto dove sta il giocatore alla fine dell'accucciata: il tempo di volo è fisso (salita a 5,5 px/update, gravità 0,22, 50 update), quindi la velocità orizzontale è distanza / tempo. Da caldo (<code>walk</code>, <code>crouch</code>, <code>leap</code>, <code>wake</code>) ogni contatto brucia; da freddo (<code>stunned</code>, <code>hurt</code>) è roccia: il contatto laterale non fa niente e lo schiacciamento, solo in <code>stunned</code>, toglie un hp. <code>rage = maxHp − hp</code> accelera camminata (0,5 + 0,3·rage), onde (1,8 + 0,4·rage) e accorcia lo stordimento (120 − 20·rage); tutti e tre vanno poi moltiplicati o divisi per il <code>boss</code> della difficoltà (5.7).</p>
+<p>Dal risveglio alla caduta (<code>bossFight</code>) l'arena è sigillata: il giocatore non può tornare a sinistra del suo bordo (la cortina di lava) e la camera resta dentro l'arena. Senza, si vince stando fuori portata: il solver l'ha trovato subito. Il golem si cerca ogni volta in <code>entities</code> (<code>get boss()</code>) invece di tenerne un riferimento, perché il solver ripristina <code>entities</code> per copia.</p>
+<p><strong>Rocce che crollano</strong>: al primo contatto dall'alto parte un conto alla rovescia di 28 update (la casella trema sempre di più), poi la casella diventa vuota per 240 update e ricresce — a meno che il giocatore non sia lì, nel qual caso aspetta ancora.</p>
+<h3>5.5 La lava che sale</h3>
+<p>Nei livelli con <code>rise</code> la lava è una linea <code>lavaY</code> sotto il livello. Dopo <code>rise.delay</code> update (con rombo e scossa) sale a <code>rise.speed</code> px/update <strong>più</strong> <code>0,003 × (distanza − 150)</code> se il giocatore è più di 150 px sopra. È un elastico: chi indugia viene punito, chi sale veloce si trova comunque la lava alle calcagna. Al respawn la lava viene riportata 9 caselle sotto il checkpoint e fermata per 4 s, altrimenti una morte in alto farebbe rinascere dentro la lava.</p>
+<p>Nel condotto: 300 update (5 s) di attesa, poi 0,13 px/update, circa mezza casella al secondo. Era 200 e 0,28 (una casella al secondo): il solver passava, ma per una persona che deve ancora imparare il livello era troppo, e anche 0,18 lo era ancora.</p>
+<h3>5.5 bis La lava che insegue</h3>
+<p>Nei livelli con <code>chase</code> la lava è una linea verticale <code>lavaX</code> a sinistra della mappa. Dopo <code>chase.delay</code> update (rombo e scossa) avanza a <code>chase.speed</code> px/update, più <code>0,003 × (distanza − 240)</code> se il giocatore è più di 240 px avanti. Uccide quando il bordo sinistro del giocatore la supera di 3 px. Al respawn torna 8 caselle a sinistra del checkpoint e si ferma per 4 s.</p>
+<p>Nella colata: 300 update di attesa, poi 0,5 px/update (meno di due caselle al secondo, contro le sette della corsa). Il solver la finisce anche a 1,6 perché non si ferma mai: il margine serve a chi si ferma per i cristalli e sbaglia qualche salto. Il primo valore, 0,9, era troppo per una persona.</p>
+<h3>5.6 Camera e particelle</h3>
+<p>La camera (<code>Camera</code> di motorino) insegue un bersaglio (centro del giocatore + 24 px nella direzione in cui guarda, 10 px sopra il centro) con un'interpolazione esponenziale (10% per update in x, 12% in y), ed è limitata ai bordi della mappa (durante lo scontro col golem, a quelli dell'arena). Durante la morte si ferma.</p>
+<p>Le particelle (<code>Particles</code> di motorino) sono puramente estetiche: posizione, velocità, gravità, vita, colore, e un flag <code>glow</code> per il disegno additivo. Massimo 400. Il solver sostituisce <code>particle()</code> con una funzione vuota.</p>
+<h3>5.7 La difficoltà</h3>
+<p><code>game/difficulty.js</code> tiene una tabella con tre voci (<code>easy</code>, <code>normal</code>, <code>hard</code>); la shell passa quella scelta al <code>World</code> come <code>diff</code>, accanto a <code>god</code>. <code>normal</code> è il gioco come tarato nelle prove; le altre lo scalano:</p>
+<table>
+<thead><tr><th class="">Campo</th><th class="">Chi lo usa</th><th class="">Facile</th><th class="">Normale</th><th class="">Difficile</th></tr></thead>
+<tbody>
+<tr><td class=""><code>lives</code></td><td class="">shell: vite iniziali e al riprova</td><td class="">9</td><td class="">5</td><td class="">3</td></tr>
+<tr><td class=""><code>gemsPerLife</code></td><td class="">shell: cristalli per una vita</td><td class="">20</td><td class="">30</td><td class="">50</td></tr>
+<tr><td class=""><code>lava</code></td><td class=""><code>rise.speed</code>, <code>chase.speed</code> ×</td><td class="">0,6</td><td class="">1</td><td class="">1,3</td></tr>
+<tr><td class=""><code>lavaDelay</code></td><td class=""><code>rise.delay</code>, <code>chase.delay</code> e attesa al respawn ×</td><td class="">2</td><td class="">1</td><td class="">0,6</td></tr>
+<tr><td class=""><code>enemies</code></td><td class="">passo delle lumache e dei pipistrelli ×</td><td class="">0,6</td><td class="">1</td><td class="">1,3</td></tr>
+<tr><td class=""><code>bossHp</code></td><td class="">colpi del golem</td><td class="">2</td><td class="">3</td><td class="">4</td></tr>
+<tr><td class=""><code>boss</code></td><td class="">camminata e onde ×, stordimento ÷</td><td class="">0,7</td><td class="">1</td><td class="">1,2</td></tr>
+<tr><td class=""><code>tuning</code></td><td class="">sopra la taratura del <code>Body</code></td><td class=""><code>coyote</code> 10, <code>jumpBuffer</code> 12</td><td class=""></td><td class=""></td></tr>
+</tbody>
+</table>
+<p>Il salto (altezza, lunghezza, velocità di corsa) non cambia mai: i livelli sono costruiti attorno a lui. Per i bambini il facile allarga invece le due tolleranze (salto dal bordo per 10 update invece di 6, salto in anticipo 12 invece di 7). La lava facile nel condotto sale a 0,078 px/update dopo 10 s, nella colata insegue a 0,3; la difficile a 0,169 e 0,65 dopo 3 s. Il solver prova ogni livello a ogni difficoltà: anche il facile, perché nemici più lenti cambiano i tempi su cui i livelli erano stati provati.</p>
+<h2>6. Il disegno (<code>Renderer</code>)</h2>
+<p>Tutto si disegna su un canvas <strong>320×180</strong> (16:9, 20×11 caselle). Il CSS lo scala di un fattore intero con <code>image-rendering: pixelated</code>, così i pixel restano quadrati e netti; sotto lo zoom 2× usa la scala esatta.</p>
+<p><strong>Ordine dei livelli</strong> per frame:</p>
+<ol>
+<li>sfondo in parallasse (<code>sky</code>: cielo a gradiente, vulcano lontano con bagliore pulsante e pennacchio di fumo, colline, cenere che cade; <code>cave</code>: texture di roccia, colate di lava lontane che tremolano);</li>
+<li><strong>strato statico</strong> del livello, già pre-renderizzato (vedi sotto), copiato solo per la finestra visibile;</li>
+<li>caselle animate: lava (corpo con macchie che scorrono, superficie a onda) e rocce che crollano (con tremolio);</li>
+<li>bagliore additivo sulle superfici di lava;</li>
+<li>entità; 6. giocatore; 7. lava che sale; 8. particelle;</li>
+<li>(dalla shell) HUD e schermate sovrapposte.</li>
+</ol>
+<p><strong>Pre-rendering</strong>: <code>bakeLevel</code> disegna una volta, all'inizio del livello, roccia, crosta, spuntoni e bocchette in un canvas grande quanto tutto il livello. Le rocce cambiano aspetto in base ai vicini (bordo superiore illuminato, lato inferiore con stalattiti, ombre laterali, vene di lava rare sulle superfici esposte). Farlo a ogni frame costerebbe decine di migliaia di <code>fillRect</code>. La texture usa un hash deterministico delle coordinate, così il livello ha sempre lo stesso aspetto.</p>
+<p><strong>Luce</strong>: non c'è un motore di luci. Il bagliore è un gradiente radiale pre-calcolato disegnato con <code>globalCompositeOperation = 'lighter'</code> (somma additiva): sopra la lava, attorno a cristalli, bolle, geyser, checkpoint attivi e uscita.</p>
+<p><strong>Sprite</strong> (<code>game/sprites.js</code>, cotti da <code>bake</code> di motorino): disegnati come testo, un carattere per pixel con una palette, cotti all'avvio in piccoli canvas. Il giocatore ha un busto comune e cinque varianti di gambe (fermo, tre passi di corsa, salto). I personaggi (<code>CHARACTERS</code>: esploratore, robottino, ragno, riccio) sono solo pelli: stesso riquadro 12×16 e stessa hitbox, la fisica non li distingue. Il robottino e il riccio riusano le gambe dell'esploratore ricolorate; il ragno, visto di fronte, ha gambe sue. <code>Renderer.character</code> sceglie quale disegnare. Tutti gli sprite guardano a destra; <code>drawSprite</code> li specchia e li ancora per il centro dei piedi.</p>
+<p><strong>Testo</strong> (<code>font.js</code> di motorino): font bitmap 5×7 disegnato con <code>fillRect</code>, così resta nitido a ogni scala. Ogni glifo è precompilato in "strisce" orizzontali (pochi <code>fillRect</code> invece di 35). Le lettere accentate si riducono alla lettera base, tranne quelle italiane, che hanno un glifo proprio (À È É Ì Ò Ù: in italiano "è" ed "e" sono parole diverse), con l'accento disegnato nelle due righe sopra la cella. Il colore può essere un gradiente (titoli "di fuoco").</p>
+<p><strong>Lingue</strong> (<code>i18n.js</code>): tutti i testi a schermo, in italiano e inglese, per chiave (<code>this.t.play</code>); quelli con un numero sono funzioni (<code>t.lives(3)</code>). I nomi dei livelli stanno in <code>levels.js</code> come <code>{ it, en }</code>. Una nuova lingua è un blocco in più in <code>STRINGS</code>: il menu la offre da sé.</p>
+<h2>7. L'input (<code>Input</code> di motorino)</h2>
+<p>Tastiera, gamepad e touch diventano un insieme di <strong>azioni</strong>: <code>left</code>, <code>right</code>, <code>up</code>, <code>down</code>, <code>jump</code>, <code>start</code>, <code>pause</code>, <code>mute</code>, <code>fullscreen</code>. Una volta per update <code>input.update()</code> costruisce l'insieme <code>now</code> e conserva il precedente in <code>prev</code>:</p>
+<ul>
+<li><code>down(a)</code> — l'azione è tenuta;</li>
+<li><code>pressed(a)</code> — è stata premuta in questo update (<code>now</code> e non <code>prev</code>).</li>
+</ul>
+<p>Un tocco rapidissimo (giù e su tra due update) andrebbe perso: per questo i <code>keydown</code> finiscono anche in un insieme <code>hits</code> che viene svuotato a ogni update, e conta come pressione anche se il tasto è già stato rilasciato.</p>
+<p>Lo schermo intero il browser lo concede solo durante un gesto: per questo non si chiede nell'update ma in <code>input.onPress</code>, chiamato dentro l'evento del tasto o del tocco (F, oppure conferma sulla riga SCHERMO INTERO delle opzioni).</p>
+<p>La shell avvia l'audio appena caricata, così la musica del titolo suona subito dove il browser lo consente. Di solito non lo consente: senza un gesto l'AudioContext nasce sospeso. Chrome fa eccezione se si ricarica un tab già toccato (prova fatta: <code>running</code> ricaricando, <code>suspended</code> in un tab nuovo). Il primo gesto dell'utente (tasto, clic o tocco) chiama <code>onFirstGesture</code>, che richiama <code>start()</code> e lo riprende.</p>
+<h2>8. L'audio</h2>
+<h3>8.1 Perché un AudioWorklet</h3>
+<p>L'audio va generato campione per campione (44 100 o 48 000 al secondo). L'AudioWorklet gira in un thread audio separato con buffer di 128 campioni, e il disegno o il garbage collector del thread principale non lo interrompono. Il main thread non genera mai un campione: manda messaggi.</p>
+<pre style="font-size:12px"><code>main thread (Audio)                            audio thread (sidicio/src/worklet.js)
+  start() ─ createSidicioNode(ctx) ──────────&gt; SidicioProcessor
+  post {songs}, {sfxDefs}, {gain}, {model}  ──&gt;  configura
+  play('magma') ── {type:'play'} ────────────&gt;   MusicPlayer.play(song)
+  sfx('jump')   ── {type:'sfx'}  ────────────&gt;   SfxPlayer.play(def)
+                                     &lt;───────    {type:'songEnd'}</code></pre>
+<h3>8.2 Il chip (<code>SidChip</code>)</h3>
+<p>Sta in <a href="https://github.com/MindContact/sidicio">sidicio</a> (<code>lib/sidicio/src/chip.js</code>), libreria separata inclusa come submodule; i player sono in <code>music.js</code> e <code>sfx.js</code> dello stesso pacchetto, il compilatore dei brani in <code>song.js</code>. Port JavaScript del motore C++ di mcma-chip (<code>native/sid_chip.cpp</code>), scritto dal datasheet e dalle note di reverse engineering pubbliche, non da reSID. Interfaccia "a registri": frequenza (16 bit), larghezza d'impulso (12 bit), forma d'onda, ring, sync, ADSR, gate per voce; filtro e volume globali.</p>
+<p><strong>Oscillatori</strong>: un accumulatore di fase a 24 bit per voce, avanzato di <code>freq</code> per ciclo di clock del C64 PAL (985 248 Hz). Le onde si ricavano dai bit dell'accumulatore come nel chip vero:</p>
+<ul>
+<li><strong>dente di sega</strong> = i 12 bit alti;</li>
+<li><strong>triangolo</strong> = l'accumulatore "ripiegato" sul bit più alto (con ring mod, quel bit è messo in XOR con quello della voce sorgente);</li>
+<li><strong>impulso</strong> = confronto dei 12 bit alti con la larghezza d'impulso;</li>
+<li><strong>rumore</strong> = un LFSR a 23 bit cadenzato dal bit 19 dell'accumulatore; 8 suoi bit formano l'uscita.</li>
+</ul>
+<p>Più onde insieme si combinano in AND, come approssimazione delle onde combinate del chip. <strong>Sync</strong>: quando il bit alto della voce sorgente sale, l'accumulatore della voce sincronizzata si azzera. Sorgenti: voce 1 ← 3, 2 ← 1, 3 ← 2.</p>
+<p><strong>Inviluppo</strong>: attacco lineare a 256 passi; decadimento e rilascio passano per un secondo divisore il cui periodo cresce al calare del livello (1, 2, 4, 8, 16, 30): è la coda quasi-esponenziale che fa "suonare" un rilascio SID. I periodi in cicli per i 16 valori di velocità sono quelli del datasheet.</p>
+<p><strong>Filtro</strong>: state-variable a trasformata TPT (stabile fino all'alto), con uscite passa-basso, passa-banda e passa-alto sommabili. Le curve cutoff→Hz sono due: <strong>8580</strong> quasi lineare 30 Hz–12 kHz con risonanza forte; <strong>6581</strong> esponenziale 200 Hz–18 kHz, risonanza più dolce e saturazione morbida all'ingresso. Ogni voce può essere instradata o no nel filtro.</p>
+<p><strong>Oversampling 4×</strong>: gli oscillatori SID sono rampe e impulsi "ingenui"; generati direttamente a 48 kHz, le loro armoniche si ripiegano in fischi inarmonici. Il chip calcola quattro campioni interni per ogni campione d'uscita e li filtra con un Butterworth del 4° ordine (due biquad) prima di decimare. Infine un DC blocker (un impulso stretto o un sustain fermo sposterebbero la membrana dell'altoparlante) e un soft clip.</p>
+<p>Il codice JS segue il C++ riga per riga, con due adattamenti: la moltiplicazione a 64 bit della fase usa i <code>double</code> (esatti fino a 2⁵³), e i flag di sync si leggono tutti prima di azzerare, così un azzeramento non nasconde il fronte di un altro.</p>
+<h3>8.3 Due chip</h3>
+<p>Un C64 ha un solo SID, e nei giochi veri un salto "ruba" per un attimo una voce alla musica. Qui ci sono due chip: <code>musicChip</code> per la musica e <code>sfxChip</code> per gli effetti, sommati con guadagni separati. La musica non perde mai una nota, e i volumi di musica ed effetti si regolano indipendentemente.</p>
+<h3>8.4 Il tick a 50 Hz</h3>
+<p>Nel <code>process</code> del worklet un contatore scende di uno a ogni campione; ogni <code>sampleRate / 50</code> campioni chiama <code>music.tick()</code> e <code>sfx.tick()</code>. È l'equivalente del player che un musicista C64 agganciava all'interrupt del raster PAL: una volta per frame si scrivono i registri, poi il chip suona da solo fino al frame dopo. Arpeggi, vibrato, sweep e batteria nascono tutti da cosa si scrive a ogni tick.</p>
+<h3>8.5 Il player musicale (<code>MusicPlayer</code>)</h3>
+<p>Un brano compilato è:</p>
+<pre style="font-size:12px"><code>{ speed,                    // tick per riga
+  rows: [Int32Array × 3],   // una cella per riga per voce
+  loopRow,                  // riga a cui tornare, -1 = fine
+  instruments: [...],       // gli strumenti usati
+  filter }                  // cutoff, risonanza, modo, LFO</code></pre>
+<p>Una cella è <code>HOLD</code> (−1), <code>OFF</code> (−2) o <code>nota | strumento &lt;&lt; 7 | glide &lt;&lt; 14</code>.</p>
+<p>Ogni <code>speed</code> tick si legge una riga: per ogni voce una nuova nota imposta lo strumento, l'ADSR e <strong>riattacca</strong> l'inviluppo (gate giù e su nello stesso frame, come un player C64); <code>OFF</code> chiude il gate; una nota con glide cambia solo l'altezza di arrivo. A ogni tick, per ogni voce attiva si calcolano altezza, onda e larghezza d'impulso dallo strumento e si scrivono nel chip. Il cutoff del filtro può essere modulato da un LFO a coseno su tutto il brano (il "respiro" dei pad e dei bassi).</p>
+<p>&lt;a id="strumenti"&gt;&lt;/a&gt;<strong>Strumenti</strong> (<code>INSTRUMENTS</code> in <code>songs.js</code>):</p>
+<table>
+<thead><tr><th class="">Campo</th><th class="">Significato</th></tr></thead>
+<tbody>
+<tr><td class=""><code>wave</code></td><td class="">forma d'onda (<code>TRI</code>, <code>SAW</code>, <code>PULSE</code>, <code>NOISE</code>, combinabili con <code>|</code>)</td></tr>
+<tr><td class=""><code>adsr</code></td><td class=""><code>[attacco, decadimento, sustain, rilascio]</code>, 0–15 come nel chip</td></tr>
+<tr><td class=""><code>pw</code>, <code>pwSpeed</code>, <code>pwMin</code>, <code>pwMax</code></td><td class="">larghezza d'impulso iniziale e sweep avanti-indietro (il classico suono "che si muove" del SID)</td></tr>
+<tr><td class=""><code>arp</code>, <code>arpSpeed</code></td><td class="">arpeggio: semitoni sommati a turno, un passo ogni <code>arpSpeed</code> tick — gli accordi suonati da una voce sola</td></tr>
+<tr><td class=""><code>vib</code></td><td class=""><code>[ritardo, profondità in semitoni, velocità]</code></td></tr>
+<tr><td class=""><code>glide</code></td><td class="">tick per scivolare verso una nota con <code>~</code></td></tr>
+<tr><td class=""><code>table</code></td><td class="">wave table: per ogni tick <code>[onda, nota, assoluta?]</code>; serve alla batteria (un frame di rumore, poi un impulso che scende di altezza = cassa)</td></tr>
+<tr><td class=""><code>filter</code></td><td class="">la voce passa nel filtro</td></tr>
+<tr><td class=""><code>ring</code>, <code>sync</code></td><td class="">modulazione ad anello / sync con la voce precedente</td></tr>
+</tbody>
+</table>
+<p><strong>Compilatore</strong> (<code>compileSong</code>): unisce le sezioni, converte i token in celle, numera gli strumenti usati, segna la riga di loop. Ogni voce parte con uno strumento predefinito (basso, solista, accordi) se la stringa non ne nomina uno. La batteria condivide la terza voce con gli accordi arpeggiati: un colpo di cassa interrompe l'accordo, che riparte dopo — come in molti brani C64.</p>
+<p><strong>I brani</strong>:</p>
+<table>
+<thead><tr><th class="">Nome</th><th class="">Dove</th><th class="">Carattere</th></tr></thead>
+<tbody>
+<tr><td class=""><code>title</code></td><td class="">titolo</td><td class="">Re minore, lento: campana su pad filtrato, basso lungo</td></tr>
+<tr><td class=""><code>magma</code></td><td class="">livelli 1–2</td><td class="">La minore con Si♭ frigio, 125 BPM, basso a ottave, solista impulso/sega</td></tr>
+<tr><td class=""><code>fuga</code></td><td class="">livelli 3–5</td><td class="">Mi minore, 150 BPM, basso al galoppo, filtro che "respira" veloce</td></tr>
+<tr><td class=""><code>golem</code></td><td class="">scontro col golem</td><td class="">Do minore, 150 BPM, i–VI–VII–V con Re♭ frigio, basso martellante, cassa in levare, filtro molto risonante</td></tr>
+<tr><td class=""><code>clear</code></td><td class="">fine livello</td><td class="">fanfara breve, non ripete</td></tr>
+<tr><td class=""><code>gameOver</code></td><td class="">game over</td><td class="">discesa cromatica, non ripete</td></tr>
+<tr><td class=""><code>victory</code></td><td class="">vittoria</td><td class="">fanfara, poi la shell rilancia il titolo</td></tr>
+</tbody>
+</table>
+<h3>8.6 Il player degli effetti (<code>SfxPlayer</code>)</h3>
+<p>Un effetto è un <strong>programma a frame</strong>: una voce <code>[onda, hz, larghezzaImpulso]</code> per tick. <code>null</code> chiude il gate per un tick; un'onda con il bit <code>RETRIGGER</code> riattacca l'inviluppo (note staccate dentro un effetto). Un <code>cutoff</code> opzionale manda la voce nel filtro con un cutoff che cambia nel tempo (lo sfrigolio della lava, il soffio del geyser).</p>
+<p>Tre voci, quindi tre effetti insieme. Un quarto prende la voce libera o, se non ce n'è, la più vecchia con priorità uguale o minore; se tutte sono più importanti l'effetto non suona. Così il suono della morte (priorità 4) non viene mai coperto da un cristallo (1).</p>
+<h3>8.7 Il lato main thread (<code>Audio</code>)</h3>
+<ul>
+<li><code>start()</code> — al caricamento: crea l'AudioContext, carica il modulo, crea il nodo, manda brani compilati ed effetti, applica le impostazioni e fa partire il brano richiesto nel frattempo. Richiamato al primo gesto, riprende il contesto se il browser l'ha lasciato sospeso.</li>
+<li><code>started</code> — vero solo se il contesto suona davvero (<code>running</code>): finché è falso il titolo mostra "PREMI UN TASTO".</li>
+<li><code>play(nome)</code> non fa nulla se quel brano sta già suonando (passare dal livello 1 al 2 non riavvia "magma"); <code>replay(nome)</code> riparte sempre.</li>
+<li><code>applySettings()</code> — volumi al quadrato (lo slider a 3 è davvero basso), muto, modello di chip.</li>
+<li>Pausa: il player musicale chiude i gate e smette di avanzare; gli effetti continuano (il suono della pausa stessa).</li>
+</ul>
+<h2>9. Gli strumenti di verifica</h2>
+<p><strong><code>tools/check.mjs</code></strong> importa i moduli audio (quelli di sidicio e i brani del gioco) e i livelli in Node (il worklet di sidicio salta <code>registerProcessor</code> se non esiste), rende ogni brano e ogni effetto con lo stesso codice del gioco e controlla <code>NaN</code>, silenzio, lunghezze delle sezioni e fine dei jingle.</p>
+<p><strong><code>tools/solve.mjs</code></strong> è la prova che i livelli si possono finire:</p>
+<ul>
+<li>crea un <code>World</code> vero con hook finti, una volta per difficoltà;</li>
+<li>lo stato mutabile (giocatore, entità, caselle, crolli, le due lave, tempo, seme del generatore) si salva e ripristina con <code>structuredClone</code>, che preserva anche il riferimento giocatore → piattaforma; il clone perde le classi, quindi giocatore (<code>Body</code>) e camera si ricopiano nelle istanze vive invece di sostituirle;</li>
+<li>l'input è un <code>FakeInput</code> di motorino; mondo, azioni e salvataggio stanno in <code>tools/sim.mjs</code>, condiviso con i test;</li>
+<li>ogni nodo della ricerca prova 6 azioni (sinistra/ferma/destra × salto sì/no) tenute per 6 update; le morti si scartano;</li>
+<li>gli stati si deduplicano su posizione (3 px), velocità, a terra, e tempo a blocchi;</li>
+<li>si espande sempre il nodo più vicino all'uscita (best-first), fino a 250 000 nodi;</li>
+<li>la strada trovata si scrive in <code>test/replays/level&lt;N&gt;.&lt;difficoltà&gt;.json</code> (azioni per nome: <code>L</code>, <code>-</code>, <code>R</code>, con <code>+J</code> per il salto) e <code>npm test</code> la rigioca dall'inizio del livello. I test durano un attimo; la ricerca, circa due minuti in tutto, gira solo quando serve.</li>
+</ul>
+<p>Con un golem l'obiettivo cambia per fasi: prima raggiungere l'arena; dentro, ogni hp rimasto pesa più di qualunque distanza, tra un colpo e l'altro conta <strong>sopravvivere più a lungo</strong> (le finestre di stordimento arrivano a chi aspetta) e, mentre il golem è stordito, stargli vicino alla testa; caduto il golem, l'uscita. In più un "cricchetto": appena un ramo mette a segno un colpo, i rami in cui il golem ha più hp vengono scartati. Con la sola distanza dal golem la ricerca restava incollata a lui senza trovare il secondo colpo.</p>
+<p>Il blocco di tempo è il compromesso: fine (1 s) segue la fase delle piattaforme mobili; grossolano (3 s) tiene la ricerca piccola nei livelli lunghi. Il solver prova il primo e, se fallisce, il secondo.</p>
+<p>Il solver ha già trovato tre errori veri durante lo sviluppo: un ascensore che ignorava il suo fermo perché lo cercava solo sotto il centro, un pipistrello che chiudeva l'unico salto possibile nel condotto, e un golem che si batteva aspettando fuori dall'arena.</p>
+<h2>10. Scelte e limiti</h2>
+<ul>
+<li><strong>Niente motore, niente librerie.</strong> Il gioco è piccolo; un motore avrebbe portato più codice di quanto ne toglie, e il SID va scritto comunque a mano.</li>
+<li><strong>Livelli come testo.</strong> Si leggono e si modificano in un diff, e il solver li verifica. Il prezzo: niente editor visuale.</li>
+<li><strong>Onde combinate approssimate</strong> con l'AND: sul chip vero sono più deboli e sporche (6581 soprattutto). Lo stesso compromesso di mcma-chip.</li>
+<li><strong>Audio ~12% di un core.</strong> Vedi <a href="TECNICA.html#prestazioni">TECNICA.md</a>.</li>
+<li><strong>Nessun salvataggio a metà livello</strong>: si salvano solo livello sbloccato, record e impostazioni.</li>
+</ul>
+
+</div>
+</body>
+</html>

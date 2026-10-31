@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vulcano — guida del giocatore</title>
+<style>
+  :root{
+    --ink:#1a2332; --muted:#5b6472; --line:#e2e6ec; --brand:#b8380f;
+    --brand-soft:#fdeee6; --accent:#0a7d55; --warn:#8a5a00; --warn-soft:#fdf4e3;
+    --bg:#ffffff; --zebra:#f7f9fc;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; color:var(--ink); line-height:1.6; margin:0; background:#eef1f5; font-size:15px;}
+  .page{max-width:880px; margin:32px auto; background:var(--bg); padding:56px 64px; box-shadow:0 2px 24px rgba(20,30,50,.10); border-radius:8px;}
+  header.cover{border-bottom:4px solid var(--brand); padding-bottom:24px; margin-bottom:32px;}
+  header.cover .eyebrow{color:var(--brand); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:12px;}
+  h1{font-size:28px; line-height:1.25; margin:8px 0 16px; color:var(--ink);}
+  h2{font-size:20px; margin:38px 0 12px; color:var(--brand); border-bottom:1px solid var(--line); padding-bottom:6px;}
+  h3{font-size:16px; margin:24px 0 8px; color:var(--ink);}
+  p{margin:8px 0;}
+  .meta{display:grid; grid-template-columns:auto 1fr; gap:4px 16px; font-size:14px; color:var(--muted); margin-top:16px;}
+  .meta dt{font-weight:600; color:var(--ink);} .meta dd{margin:0;}
+  table{width:100%; border-collapse:collapse; margin:16px 0; font-size:14px;}
+  th,td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--line);}
+  th{background:var(--brand-soft); color:var(--brand); font-weight:700;}
+  td.num,th.num{text-align:right; font-variant-numeric:tabular-nums;}
+  tbody tr:nth-child(even){background:var(--zebra);}
+  tr.total td{font-weight:800; border-top:2px solid var(--brand); background:#fdf3ee;}
+  tr.sub td{font-style:italic; color:var(--muted); background:#f2f6fb;}
+  tr.group td{font-weight:700; background:#eef3f9;}
+  .tag{display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:.03em; text-transform:uppercase;}
+  .tag.done{background:#e4f4ec; color:var(--accent);}
+  .tag.todo{background:var(--warn-soft); color:var(--warn);}
+  .tag.up{background:#fde7e7; color:#a11;}
+  .tag.down{background:#e4f4ec; color:var(--accent);}
+  .callout{background:var(--brand-soft); border-left:4px solid var(--brand); padding:16px 20px; border-radius:0 6px 6px 0; margin:20px 0;}
+  .callout.warn{background:var(--warn-soft); border-left-color:var(--warn);}
+  .highlight{background:linear-gradient(90deg,#0b4f8a,#0a6fb0); color:#fff; padding:20px 24px; border-radius:8px; margin:20px 0; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px;}
+  .highlight .label{font-size:14px; opacity:.9; letter-spacing:.04em; text-transform:uppercase;}
+  .highlight .value{font-size:30px; font-weight:800;}
+  .kpi-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:20px 0;}
+  .kpi{border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center; background:var(--zebra);}
+  .kpi .n{font-size:24px; font-weight:800; color:var(--brand); font-variant-numeric:tabular-nums;}
+  .kpi .l{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; margin-top:4px;}
+  .muted{color:var(--muted);} small{color:var(--muted);}
+  ul{margin:8px 0; padding-left:22px;} li{margin:4px 0;}
+  code{background:#f0f2f5; padding:1px 5px; border-radius:4px; font-size:13px;}
+  footer{margin-top:40px; padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--muted); font-style:italic;}
+  .range-band{display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin:16px 0;}
+  .range-band div{padding:14px;}
+  .range-band .c{background:var(--brand); color:#fff;}
+  .range-band .n{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .range-band .l{font-size:12px; text-transform:uppercase; letter-spacing:.04em;}
+  @page{size:A4; margin:14mm 12mm;}
+  @media print{body{background:#fff;} .page{box-shadow:none; margin:0; max-width:none; padding:24px 8px; border-radius:0;} h2{page-break-after:avoid;} table{page-break-inside:avoid;}}
+  @media (max-width:640px){.page{padding:28px 20px;} .kpi-grid,.range-band{grid-template-columns:1fr;}}
+</style>
+<style>
+.gallery{text-align:center;margin:12px 0;page-break-inside:avoid}
+.gallery img{margin:4px;border:1px solid #ddd;border-radius:8px;vertical-align:top}
+ol{margin:8px 0;padding-left:22px} ol li{margin:4px 0}
+h3,h4{page-break-after:avoid}
+pre{background:#f0f2f5;border-radius:6px;padding:10px 14px;margin:12px 0;overflow-x:auto;page-break-inside:avoid;line-height:1.25}
+pre code{background:none;padding:0;font-size:inherit;white-space:pre}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="cover">
+  <div class="eyebrow">Vulcano</div>
+  <h1>Vulcano — guida del giocatore</h1>
+</header>
+<p>Sei un esploratore in tuta termica (o, se preferisci, un robottino, un ragno o un riccio) rimasto dentro un vulcano che si sta risvegliando. Attraversa cinque zone, raccogli i cristalli e raggiungi la porta di luce in fondo a ogni livello prima che la lava ti raggiunga.</p>
+<h2>Avviare il gioco</h2>
+<p>Apri la pagina del gioco nel browser (Chrome, Firefox, Edge o Safari recenti). La musica del titolo parte da sola; M la spegne. Molti browser però non lasciano partire l'audio finché non tocchi qualcosa: in quel caso sul titolo compare <strong>PREMI UN TASTO PER ACCENDERE IL SID</strong>, e il primo tasto (o il primo tocco) accende musica ed effetti.</p>
+<h2>Comandi</h2>
+<table>
+<thead><tr><th class="">Azione</th><th class="">Tastiera</th><th class="">Gamepad</th><th class="">Touch</th></tr></thead>
+<tbody>
+<tr><td class="">Muoversi</td><td class="">← → oppure A D</td><td class="">levetta o croce</td><td class="">◀ ▶</td></tr>
+<tr><td class="">Saltare</td><td class="">Spazio, Z, K, ↑ oppure W</td><td class="">A / B</td><td class="">▲</td></tr>
+<tr><td class="">Scendere da una crosta</td><td class="">↓ + salto</td><td class="">giù + A</td><td class="">—</td></tr>
+<tr><td class="">Pausa</td><td class="">P oppure Esc</td><td class="">Start</td><td class="">II</td></tr>
+<tr><td class="">Confermare nei menu</td><td class="">Invio o salto</td><td class="">A / Start</td><td class="">▲</td></tr>
+<tr><td class="">Audio on/off</td><td class="">M</td><td class="">—</td><td class="">—</td></tr>
+<tr><td class="">Schermo intero</td><td class="">F</td><td class="">—</td><td class="">—</td></tr>
+</tbody>
+</table>
+<p><strong>Il salto è modulabile</strong>: un tocco breve fa un saltello, tenere premuto fa il salto pieno (più di tre caselle in alto). Il gioco perdona un po': puoi saltare per un istante dopo aver lasciato il bordo, e un salto premuto appena prima di atterrare parte comunque.</p>
+<h2>Il menu</h2>
+<ul>
+<li><strong>GIOCA</strong> — parte dal livello scelto sotto.</li>
+<li><strong>LIVELLO</strong> — puoi ripartire da qualunque livello già raggiunto.</li>
+<li><strong>OPZIONI</strong> — lingua, difficoltà, personaggio e audio, descritti qui sotto.</li>
+<li><strong>CREDITI</strong> — chi ha fatto il gioco e con cosa suona. Invio o Esc per tornare.</li>
+</ul>
+<p>Usa ↑ ↓ per scegliere la voce, ← → per cambiarla.</p>
+<h3>Le opzioni</h3>
+<ul>
+<li><strong>LINGUA</strong> — italiano o inglese. Al primo avvio segue la lingua del browser.</li>
+<li><strong>DIFFICOLTÀ</strong> — facile, normale o difficile; in basso una riga dice cosa cambia. Vale dalla partita successiva e resta salvata. Vedi sotto.</li>
+<li><strong>PERSONAGGIO</strong> — esploratore, robottino, ragno o riccio; a destra lo vedi correre. Cambia solo l'aspetto: salti, velocità e ingombro sono gli stessi.</li>
+<li><strong>CHIP SID</strong> — il modello di chip che suona: <strong>6581</strong> (il C64 originale, suono più sporco e scuro) o <strong>8580</strong> (il C64C, più pulito, filtro più risonante).</li>
+<li><strong>MUSICA / EFFETTI</strong> — volume da 0 a 10.</li>
+<li><strong>SCHERMO INTERO</strong> — sì o no; come il tasto F. Non c'è dove il browser non lo permette (iPhone): lì conviene installare il gioco, vedi sotto.</li>
+<li><strong>INDIETRO</strong> (o Esc) — torna al titolo.</li>
+</ul>
+<h3>La difficoltà</h3>
+<p>Il salto e i livelli sono gli stessi a ogni difficoltà: cambiano il tempo che hai e quanto il gioco perdona. <strong>Facile</strong> è pensata per i bambini.</p>
+<table>
+<thead><tr><th class=""></th><th class="">Facile</th><th class="">Normale</th><th class="">Difficile</th></tr></thead>
+<tbody>
+<tr><td class="">Vite all'inizio</td><td class="">9</td><td class="">5</td><td class="">3</td></tr>
+<tr><td class="">Una vita in più ogni</td><td class="">20 cristalli</td><td class="">30 cristalli</td><td class="">50 cristalli</td></tr>
+<tr><td class="">Lava che sale o insegue</td><td class="">più lenta (0,6×), parte dopo il doppio</td><td class="">come tarata</td><td class="">più veloce (1,3×), parte prima</td></tr>
+<tr><td class="">Lumache e pipistrelli</td><td class="">più lenti (0,6×)</td><td class=""></td><td class="">più veloci (1,3×)</td></tr>
+<tr><td class="">Colpi per il golem</td><td class="">2, ed è più lento</td><td class="">3</td><td class="">4, ed è più veloce</td></tr>
+<tr><td class="">Salto dal bordo e salto in anticipo</td><td class="">più tolleranti</td><td class=""></td><td class=""></td></tr>
+</tbody>
+</table>
+<p>Le scelte restano salvate nel browser.</p>
+<h2>Cosa trovi nei livelli</h2>
+<table>
+<thead><tr><th class="">Cosa</th><th class="">Com'è</th><th class="">Cosa fare</th></tr></thead>
+<tbody>
+<tr><td class="">Cristallo</td><td class="">gemma azzurra</td><td class="">prendilo: 100 punti, ogni 30 una vita (20 in facile, 50 in difficile)</td></tr>
+<tr><td class="">Checkpoint</td><td class="">fiamma blu su una colonna</td><td class="">toccalo: diventa arancione e ripartirai da lì</td></tr>
+<tr><td class="">Uscita</td><td class="">porta di luce</td><td class="">entraci per finire il livello</td></tr>
+<tr><td class="">Lava</td><td class="">rossa e ondeggiante</td><td class="">non toccarla</td></tr>
+<tr><td class="">Spuntoni</td><td class="">punte viola di ossidiana</td><td class="">non caderci sopra</td></tr>
+<tr><td class="">Roccia che crolla</td><td class="">blocco crepato</td><td class="">trema e cade poco dopo che ci sali; ricresce</td></tr>
+<tr><td class="">Crosta</td><td class="">lastra sottile</td><td class="">ci passi attraverso da sotto e ci atterri sopra</td></tr>
+<tr><td class="">Piattaforma mobile</td><td class="">lastra scura che si muove</td><td class="">salici, ti porta con sé</td></tr>
+<tr><td class="">Geyser</td><td class="">bocchetta nel terreno</td><td class="">quando fuma sta per eruttare: aspetta</td></tr>
+<tr><td class="">Lumaca di magma</td><td class="">si trascina sul terreno</td><td class="">saltale in testa (200 punti)</td></tr>
+<tr><td class="">Pipistrello di cenere</td><td class="">vola a otto</td><td class="">saltagli in testa (200 punti)</td></tr>
+<tr><td class="">Bolla di fuoco</td><td class="">salta fuori dalla lava</td><td class="">aspetta che ricada</td></tr>
+</tbody>
+</table>
+<p>Toccare un nemico di lato costa una vita; saltargli sopra lo elimina e ti fa rimbalzare (tenendo premuto salto rimbalzi più in alto).</p>
+<h2>I livelli</h2>
+<ol>
+<li><strong>Le pendici</strong> — all'aperto, sotto il vulcano in eruzione. Il primo incontro con lava, rocce che crollano e geyser.</li>
+<li><strong>Camere di magma</strong> — grotte con laghi di lava, piattaforme mobili e un ascensore.</li>
+<li><strong>Il condotto</strong> — si sale in verticale e <strong>la lava sale con te</strong>: hai qualche secondo prima che parta, poi sale costante; se la distanzi molto accelera per raggiungerti. Morendo, la lava riparte dal basso dopo una pausa.</li>
+<li><strong>Il cratere</strong> — tutto insieme, fino alla bocca del vulcano, dove ti aspetta il golem di magma.</li>
+<li><strong>La colata</strong> — sconfitto il golem il vulcano erutta: scappa verso valle mentre <strong>un fronte di lava ti insegue da sinistra</strong>. Parte dopo qualche secondo e va più piano di te di corsa: non fermarti troppo. Morendo riparte un po' più indietro, dopo una pausa.</li>
+</ol>
+<h2>Il golem di magma</h2>
+<p>In fondo al cratere l'uscita è sigillata da una lastra di roccia, e davanti dorme un golem di lava. Quando entri nell'arena si sveglia e una cortina di lava ti chiude la ritirata.</p>
+<ul>
+<li>Lo scontro ha una musica sua, che torna quella del livello se muori o lo sconfiggi.</li>
+<li>Il golem <strong>cammina verso di te</strong>, poi si accuccia (è il segnale) e **salta dove sei**: spostati.</li>
+<li>Quando ricade manda <strong>due onde di fuoco</strong> lungo il pavimento, una per lato: saltale, oppure aspetta su una delle due croste in alto.</li>
+<li>Dopo lo schianto resta <strong>stordito</strong> e si raffredda: le crepe diventano grigie e la barra in basso lampeggia. È il momento di **saltargli in testa**. Da incandescente brucia, anche in testa.</li>
+<li>Servono <strong>3 colpi</strong> (2 in facile, 4 in difficile). A ogni colpo diventa più veloce, le onde più rapide e lo stordimento più breve.</li>
+<li>Sconfitto, vale <strong>5000 punti</strong> e la porta si apre. Se muori torni al checkpoint prima dell'arena, e il golem si riaddormenta tenendo i colpi già presi.</li>
+</ul>
+<h2>Vite e punteggio</h2>
+<ul>
+<li>Si parte con <strong>5 vite</strong> (9 in facile, 3 in difficile). Si perde una vita in lava, sugli spuntoni, toccando un nemico o una bolla, nel fuoco di un geyser o cadendo nel vuoto.</li>
+<li>Senza vite è <strong>GAME OVER</strong>: Invio riprova il livello con le vite di partenza (il punteggio torna a quello d'inizio livello), Esc torna al menu.</li>
+<li>A fine livello: <strong>bonus tempo</strong> (20 punti per ogni secondo sotto il tempo di riferimento del livello) e <strong>1000 punti</strong> se hai preso tutti i cristalli.</li>
+<li>Ogni colpo al golem vale 200 punti, sconfiggerlo 5000.</li>
+<li>Il record resta salvato nel browser.</li>
+</ul>
+<h2>Pausa automatica</h2>
+<p>Se passi a un'altra finestra o a un'altra scheda, il gioco si mette in pausa da solo: la lava non ti aspetta, ma il gioco sì.</p>
+<h2>Installarlo come app</h2>
+<p>Vulcano si installa come un'app (è una PWA): in Chrome dal menu <em>Installa Vulcano</em> o dall'icona nella barra degli indirizzi; su Android <em>Aggiungi a schermata Home</em>; su iPhone, in Safari, <em>Condividi → Aggiungi alla schermata Home</em>. Si apre a schermo intero e, dopo averlo aperto una volta con la rete, funziona anche offline.</p>
+<h2>Problemi comuni</h2>
+<ul>
+<li><strong>Non sento niente</strong> — premi un tasto sul titolo; controlla di non aver premuto M (in basso a sinistra compare MUTO) e i volumi nel menu.</li>
+<li><strong>Scatta o va lento</strong> — chiudi altre schede pesanti; il gioco gira sempre alla stessa velocità, ma se il computer non regge i fotogrammi saltano.</li>
+<li><strong>Ho perso i progressi</strong> — sono salvati nel browser: la navigazione in incognito o la pulizia dei dati del sito li cancellano.</li>
+</ul>
+
+</div>
+</body>
+</html>

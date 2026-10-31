@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0b0306">
+  <title>Vulcano</title>
+  <link rel="icon" href="icons/icon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="screen" width="320" height="180"></canvas>
+  <div id="touch" aria-hidden="true">
+    <div class="pad">
+      <button data-action="left">&#9664;</button>
+      <button data-action="right">&#9654;</button>
+    </div>
+    <div class="pad">
+      <button data-action="pause" class="small">II</button>
+      <button data-action="jump">&#9650;</button>
+    </div>
+  </div>
+  <noscript>Vulcano ha bisogno di JavaScript.</noscript>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
